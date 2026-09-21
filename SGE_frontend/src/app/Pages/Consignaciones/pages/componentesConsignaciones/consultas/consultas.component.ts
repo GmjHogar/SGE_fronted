@@ -234,6 +234,9 @@ export class ConsultasComponent implements OnInit {
   cedula: string = ''
   cedulaEditar: string = ''
   base64: string = ''
+  cargandoComprobante: boolean = false
+  errorComprobante: string = ''
+  cacheComprobantes = new Map<number, string>()
   check: boolean = false
   page: number = 0
   pages: number = 0
@@ -722,6 +725,46 @@ export class ConsultasComponent implements OnInit {
 
   img(dataURI: string) {
     this.base64 = dataURI
+  }
+
+  //PIDE EL COMPROBANTE AL BACK (EL LISTADO YA NO TRAE LA IMAGEN) Y LO GUARDA EN CACHE POR ID
+  verComprobante(consignacion: any) {
+    var id = consignacion.idConsignacion
+    this.base64 = ''
+    this.errorComprobante = ''
+
+    var cache = this.cacheComprobantes.get(id)
+    if (cache) {
+      this.base64 = cache
+      return
+    }
+
+    this.cargandoComprobante = true
+    this.consultarService.getComprobanteByIdConsignacion(id).subscribe(
+      (base: string) => {
+        var src = this.prefijoDataURI(consignacion.comprobantes) + base
+        this.cacheComprobantes.set(id, src)
+        this.base64 = src
+        this.cargandoComprobante = false
+      }, (error: any) => {
+        this.errorComprobante = error.status == 404 ? 'Sin comprobante' : 'No se pudo cargar el comprobante'
+        this.cargandoComprobante = false
+      }
+    )
+  }
+
+  //ARMA EL PREFIJO "data:<mime>;base64," CON EL dataURI DEL LISTADO O, SI VIENE VACIO, CON LA EXTENSION DEL ARCHIVO
+  prefijoDataURI(comprobante: any): string {
+    var dataURI: string = (comprobante?.dataURI ?? '').trim()
+    if (dataURI != '') {
+      return dataURI.endsWith(',') ? dataURI : dataURI + ','
+    }
+
+    var ext = (comprobante?.nombreArchivo ?? '').split('.').pop()?.toLowerCase()
+    var mimes: { [key: string]: string } = {
+      jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', webp: 'image/webp', bmp: 'image/bmp'
+    }
+    return `data:${mimes[ext ?? ''] ?? 'image/jpeg'};base64,`
   }
 
   //OBTENER LA CONSIGNACION POR ID (PARA EDITAR Y OTRAS FUNCIONES)
@@ -1663,7 +1706,8 @@ export class ConsultasComponent implements OnInit {
   metodoImagen(idConsignacion: number, idElemento: string) {
     var comprobante = this.con.find((c: any) => c.idConsignacion == idConsignacion)
     if (comprobante != null || comprobante != undefined) {
-      this.base64 = comprobante.comprobantes.dataURI + ',' + comprobante.comprobantes.rutaArchivo
+      var x = document.getElementById(idElemento)
+      x?.addEventListener('click', () => this.verComprobante(comprobante));
     }
   }
 

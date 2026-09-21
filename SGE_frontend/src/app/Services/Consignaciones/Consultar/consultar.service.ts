@@ -41,6 +41,11 @@ export class ConsultarService {
     return this.http.get(`${baseUrl}/consignacion/getConsignacionByCliente/${cedula}?page=${page}&size=${size}`)
   }
 
+  //DEVUELVE EL BASE64 EN TEXTO PLANO (SIN JSON Y SIN PREFIJO "data:")
+  getComprobanteByIdConsignacion(idConsignacion: number) {
+    return this.http.get(`${baseUrl}/consignacion/getComprobanteByIdConsignacion/${idConsignacion}`, { responseType: 'text' })
+  }
+
   cambiarEstadoConsignacion(cambioEstado: any, tipoReporte: string) {
     return this.http.put(`${baseUrl}/consignacion/changeEstadoOfConsignacionToComprobadas?tipoReporte=${tipoReporte}`, cambioEstado)
   }
