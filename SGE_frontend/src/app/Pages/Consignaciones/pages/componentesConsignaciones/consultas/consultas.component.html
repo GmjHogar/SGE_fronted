@@ -186,29 +186,29 @@
             <!-- VER COMPROBANTE -->
             <span *appConsignacionesDirective="permisos[14]">
               <span *appConsignacionesDirective="permisos[3]">
-                <button *ngIf="!botones[i]" (click)="img(c.comprobantes.dataURI + ',' + c.comprobantes.rutaArchivo)"
+                <button *ngIf="!botones[i]" (click)="verComprobante(c)"
                   class="btn btn-sm btn-success ms-2" data-bs-toggle="modal" data-bs-target="#modalImage"
                   id="btn_comprobante_{{i}}"><i class="fa-regular fa-image"></i></button>
               </span>
 
               <span *appConsignacionesDirective="permisos[4]">
-                <button *ngIf="!botones[i]" (click)="img(c.comprobantes.dataURI + ',' + c.comprobantes.rutaArchivo)"
+                <button *ngIf="!botones[i]" (click)="verComprobante(c)"
                   class="btn btn-sm btn-success ms-2" data-bs-toggle="modal" data-bs-target="#modalImage"
                   id="btn_comprobante_{{i}}"><i class="fa-regular fa-image"></i></button>
               </span>
 
               <span *appConsignacionesDirective="permisos[0]">
-                <button *ngIf="!botones[i]" (click)="img(c.comprobantes.dataURI + ',' + c.comprobantes.rutaArchivo)"
+                <button *ngIf="!botones[i]" (click)="verComprobante(c)"
                   class="btn btn-sm btn-success ms-2" data-bs-toggle="modal" data-bs-target="#modalImage"
                   id="btn_comprobante_{{i+'a'}}"><i class="fa-regular fa-image"></i></button>
               </span>
               <span *appConsignacionesDirective="permisos[25]">
-                <button *ngIf="!botones[i]" (click)="img(c.comprobantes.dataURI + ',' + c.comprobantes.rutaArchivo)"
+                <button *ngIf="!botones[i]" (click)="verComprobante(c)"
                   class="btn btn-sm btn-success ms-2" data-bs-toggle="modal" data-bs-target="#modalImage"
                   id="btn_comprobante_{{i+'a'}}"><i class="fa-regular fa-image"></i></button>
               </span>
               <span *appConsignacionesDirective="permisos[26]">
-                <button *ngIf="!botones[i]" (click)="img(c.comprobantes.dataURI + ',' + c.comprobantes.rutaArchivo)"
+                <button *ngIf="!botones[i]" (click)="verComprobante(c)"
                   class="btn btn-sm btn-success ms-2" data-bs-toggle="modal" data-bs-target="#modalImage"
                   id="btn_comprobante_{{i}}"><i class="fa-regular fa-image"></i></button>
               </span>
@@ -427,7 +427,14 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <img src="{{ base64 }}" style="height: 700px; width: 466px;">
+          <div *ngIf="cargandoComprobante" class="text-center py-5">
+            <div class="spinner-border" role="status"></div>
+          </div>
+          <div *ngIf="!cargandoComprobante && errorComprobante" class="text-center py-5 fw-bold">
+            {{ errorComprobante }}
+          </div>
+          <img *ngIf="!cargandoComprobante && !errorComprobante && base64" [src]="base64"
+            style="height: 700px; width: 466px;">
         </div>
       </div>
     </div>
