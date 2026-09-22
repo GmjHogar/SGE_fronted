@@ -41,9 +41,9 @@ export class ConsultarService {
     return this.http.get(`${baseUrl}/consignacion/getConsignacionByCliente/${cedula}?page=${page}&size=${size}`)
   }
 
-  //DEVUELVE EL BASE64 EN TEXTO PLANO (SIN JSON Y SIN PREFIJO "data:")
-  getComprobanteByIdConsignacion(idConsignacion: number) {
-    return this.http.get(`${baseUrl}/consignacion/getComprobanteByIdConsignacion/${idConsignacion}`, { responseType: 'text' })
+  //DEVUELVE LOS BYTES DEL COMPROBANTE. EL NAVEGADOR LO CACHEA UN DIA CON EL ETag QUE MANDA EL BACK
+  getComprobanteFileByIdConsignacion(idConsignacion: number) {
+    return this.http.get(`${baseUrl}/consignacion/getComprobanteFileByIdConsignacion/${idConsignacion}`, { responseType: 'blob' })
   }
 
   cambiarEstadoConsignacion(cambioEstado: any, tipoReporte: string) {
