@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { DomSanitizer } from '@angular/platform-browser';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { Subscription } from 'rxjs';
 import { PERMISOSCONSIGNACION } from 'src/app/Models/AllPermisos';
 import { BancoServiceService } from 'src/app/Services/Consignaciones/Bancos/banco-service.service';
@@ -23,7 +23,7 @@ declare var $: any;
   styleUrls: ['./consultas.component.css']
 })
 
-export class ConsultasComponent implements OnInit {
+export class ConsultasComponent implements OnInit, OnDestroy {
 
   // ARRAYS
   roles: string[] = []
@@ -233,10 +233,11 @@ export class ConsultasComponent implements OnInit {
   //VARIABLES
   cedula: string = ''
   cedulaEditar: string = ''
-  base64: string = ''
+  comprobante: SafeUrl | null = null
+  urlComprobante: string = ''
+  idComprobante: number = 0
   cargandoComprobante: boolean = false
   errorComprobante: string = ''
-  cacheComprobantes = new Map<number, string>()
   check: boolean = false
   page: number = 0
   pages: number = 0
@@ -286,6 +287,13 @@ export class ConsultasComponent implements OnInit {
     this.getPlataforma()
     this.getAllEstado()
     this.getSede()
+
+    //AL CERRAR EL MODAL SE SUELTA LA IMAGEN QUE SE ESTABA MOSTRANDO
+    $('#modalImage').on('hidden.bs.modal', () => this.liberarComprobante())
+  }
+
+  ngOnDestroy(): void {
+    this.liberarComprobante()
   }
 
   //VALIDACION DE LOS CAMPOS DE CONSIGNACION PARA EDITAR
@@ -723,48 +731,46 @@ export class ConsultasComponent implements OnInit {
 
   }
 
-  img(dataURI: string) {
-    this.base64 = dataURI
-  }
-
-  //PIDE EL COMPROBANTE AL BACK (EL LISTADO YA NO TRAE LA IMAGEN) Y LO GUARDA EN CACHE POR ID
+  //PIDE EL ARCHIVO DEL COMPROBANTE AL BACK (EL LISTADO YA NO TRAE LA IMAGEN).
+  //NO SE GUARDA CACHE EN MEMORIA: EL NAVEGADOR YA LO CACHEA CON EL ETag DE LA RESPUESTA
   verComprobante(consignacion: any) {
     var id = consignacion.idConsignacion
-    this.base64 = ''
+    this.idComprobante = id
+    this.liberarComprobante()
     this.errorComprobante = ''
-
-    var cache = this.cacheComprobantes.get(id)
-    if (cache) {
-      this.base64 = cache
-      return
-    }
-
     this.cargandoComprobante = true
-    this.consultarService.getComprobanteByIdConsignacion(id).subscribe(
-      (base: string) => {
-        var src = this.prefijoDataURI(consignacion.comprobantes) + base
-        this.cacheComprobantes.set(id, src)
-        this.base64 = src
+
+    this.consultarService.getComprobanteFileByIdConsignacion(id).subscribe(
+      (archivo: Blob) => {
+        //SI YA SE ABRIO OTRO COMPROBANTE, ESTA RESPUESTA LLEGO TARDE Y SE DESCARTA
+        if (this.idComprobante != id) {
+          return
+        }
+        if (archivo.size == 0) {
+          this.errorComprobante = 'Sin comprobante'
+          this.cargandoComprobante = false
+          return
+        }
+        this.urlComprobante = URL.createObjectURL(archivo)
+        this.comprobante = this.sanitizer.bypassSecurityTrustUrl(this.urlComprobante)
         this.cargandoComprobante = false
       }, (error: any) => {
+        if (this.idComprobante != id) {
+          return
+        }
         this.errorComprobante = error.status == 404 ? 'Sin comprobante' : 'No se pudo cargar el comprobante'
         this.cargandoComprobante = false
       }
     )
   }
 
-  //ARMA EL PREFIJO "data:<mime>;base64," CON EL dataURI DEL LISTADO O, SI VIENE VACIO, CON LA EXTENSION DEL ARCHIVO
-  prefijoDataURI(comprobante: any): string {
-    var dataURI: string = (comprobante?.dataURI ?? '').trim()
-    if (dataURI != '') {
-      return dataURI.endsWith(',') ? dataURI : dataURI + ','
+  //LIBERA LA URL LOCAL DE LA IMAGEN. SIN ESTO CADA COMPROBANTE ABIERTO SE QUEDA EN MEMORIA
+  liberarComprobante() {
+    if (this.urlComprobante != '') {
+      URL.revokeObjectURL(this.urlComprobante)
+      this.urlComprobante = ''
     }
-
-    var ext = (comprobante?.nombreArchivo ?? '').split('.').pop()?.toLowerCase()
-    var mimes: { [key: string]: string } = {
-      jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', webp: 'image/webp', bmp: 'image/bmp'
-    }
-    return `data:${mimes[ext ?? ''] ?? 'image/jpeg'};base64,`
+    this.comprobante = null
   }
 
   //OBTENER LA CONSIGNACION POR ID (PARA EDITAR Y OTRAS FUNCIONES)

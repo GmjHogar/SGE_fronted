@@ -433,7 +433,7 @@
           <div *ngIf="!cargandoComprobante && errorComprobante" class="text-center py-5 fw-bold">
             {{ errorComprobante }}
           </div>
-          <img *ngIf="!cargandoComprobante && !errorComprobante && base64" [src]="base64"
+          <img *ngIf="!cargandoComprobante && !errorComprobante && comprobante" [src]="comprobante"
             style="height: 700px; width: 466px;">
         </div>
       </div>

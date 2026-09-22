@@ -4,8 +4,6 @@ import { Subject } from 'rxjs';
 import { Consignacion, ObservacionDto } from 'src/app/Types/Consignaciones';
 import baseUrl from 'src/app/utils/helper';
 
-const baseUrlV2 = baseUrl.replace(/\/v1$/, '/v2');
-
 @Injectable({
   providedIn: 'root'
 })
@@ -16,7 +14,7 @@ export class ConsultarService {
   public proSubject = new Subject<boolean>();
 
   getAllConsignaciones(estado: string, page: number, size: number, fechaCreacion: string) {
-    return this.http.get(`${baseUrlV2}/consignacion/getAllConsignaciones?estado=${estado}&page=${page}&size=${size}&fechaCreacion=${fechaCreacion}`)
+    return this.http.get(`${baseUrl}/consignacion/getAllConsignaciones?estado=${estado}&page=${page}&size=${size}&fechaCreacion=${fechaCreacion}`)
   }
 
   getConsignacionById(id: number) {
@@ -40,12 +38,12 @@ export class ConsultarService {
   }
 
   getConsignacionByCedula(cedula: string, page: number, size: number) {
-    return this.http.get(`${baseUrlV2}/consignacion/getConsignacionByCliente/${cedula}?page=${page}&size=${size}`)
+    return this.http.get(`${baseUrl}/consignacion/getConsignacionByCliente/${cedula}?page=${page}&size=${size}`)
   }
 
-  //DEVUELVE EL BASE64 EN TEXTO PLANO (SIN JSON Y SIN PREFIJO "data:")
-  getComprobanteByIdConsignacion(idConsignacion: number) {
-    return this.http.get(`${baseUrlV2}/consignacion/getComprobanteByIdConsignacion/${idConsignacion}`, { responseType: 'text' })
+  //DEVUELVE LOS BYTES DEL COMPROBANTE. EL NAVEGADOR LO CACHEA UN DIA CON EL ETag QUE MANDA EL BACK
+  getComprobanteFileByIdConsignacion(idConsignacion: number) {
+    return this.http.get(`${baseUrl}/consignacion/getComprobanteFileByIdConsignacion/${idConsignacion}`, { responseType: 'blob' })
   }
 
   cambiarEstadoConsignacion(cambioEstado: any, tipoReporte: string) {
