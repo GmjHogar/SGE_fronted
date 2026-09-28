@@ -568,3 +568,24 @@ label.btn.btn-outline-dark {
   padding-bottom: 15px;
   font-size: 1.1em;
 }
+
+/* FLECHA DE LAS SECCIONES DEL FILTRO */
+/* Font Awesome (kit JS) reemplaza el <i> por un <svg> sin atributo de Angular; se gira el span */
+.filtro-flecha {
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+
+.filtro-toggle:not(.collapsed) .filtro-flecha {
+  transform: rotate(180deg);
+}
+
+/* BOTONES DEL FILTRO SIEMPRE VISIBLES */
+.offcanvas-footer-filtros {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid #dee2e6;
+  background-color: #fff;
+}
