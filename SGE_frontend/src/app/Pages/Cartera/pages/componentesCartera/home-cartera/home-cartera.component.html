@@ -11,32 +11,16 @@
     </button>
   </div>
   <button class="btn btn-danger b filter" data-bs-toggle="offcanvas" data-bs-target="#offcanvasFilter">
-    <h6 class="text-center mt-1" style="font-size: 13px">Filtros</h6>
+    <h6 class="text-center mt-1" style="font-size: 13px">
+      Filtros
+      <span *ngIf="cantidadFiltrosActivos > 0" class="badge rounded-pill bg-light text-danger d-block mt-1">{{
+        cantidadFiltrosActivos }}</span>
+    </h6>
   </button>
 
   <div class="card-c">
     <div class="row">
-      <div *ngIf="
-          (buscarObligacion != '' && variableLimpiar) ||
-          this.filtros.banco.length != 0 ||
-          (this.filtros.diasVencidosInicio != 0 &&
-            this.filtros.diasVencidosInicio != null) ||
-          (this.filtros.diasVencidosFin != 0 &&
-            this.filtros.diasVencidosFin != null) ||
-          this.filtros.edadVencimiento.length != 0 ||
-          this.filtros.sede.length != 0 ||
-          this.filtros.clasiJuridica.length != 0 ||
-          (this.filtros.saldoCapitalInicio != 0 &&
-            this.filtros.saldoCapitalInicio != null) ||
-          (this.filtros.saldoCapitalFin != 0 &&
-            this.filtros.saldoCapitalFin != null) ||
-          this.filtros.fechaCpcInicio != null ||
-          this.filtros.fechaCpcFin != null ||
-          this.filtros.fechaGestionInicio != null ||
-          this.filtros.fechaGestionFin != null ||
-          this.filtros.fechaCompromisoInicio != null ||
-          this.filtros.fechaCompromisoFin != null
-        " class="col-md-2">
+      <div *ngIf="(buscarObligacion != '' && variableLimpiar) || cantidadFiltrosActivos > 0" class="col-md-2">
         <button (click)="reiniciarFiltros('LIMPIAR')" class="btn btn-primary justify-content-start mb-3">
           Limpiar Filtros
         </button>
@@ -1793,30 +1777,24 @@
       <h5 class="offcanvas-title">Filtros</h5>
       <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
-    <div class="offcanvas-body">
+    <div class="offcanvas-body" (keydown.enter)="!botonFiltro && filtroFirst()">
       <div class="row mb-3">
         <div class="col-md-12">
           <div class="row">
             <div class="col-md-12 mb-3">
               <figure>
                 <blockquote class="blockquote">
-                  <h6 class="fw-bold" data-bs-toggle="collapse" href="#collapseBanco" style="cursor: pointer">
-                    Bancos &nbsp;<i class="fa-solid fa-caret-down"></i>
+                  <h6 class="fw-bold filtro-toggle collapsed" data-bs-toggle="collapse" href="#collapseBanco"
+                    aria-expanded="false" style="cursor: pointer">
+                    Bancos <span *ngIf="bancosArray.length">({{ bancosArray.length }})</span>&nbsp;<span class="filtro-flecha"><i class="fa-solid fa-caret-down"></i></span>
                   </h6>
                 </blockquote>
                 <div class="collapse" id="collapseBanco">
-                  <div class="form-check">
-                    <input class="form-check-input" type="checkbox" value="COL" (click)="metodoBancos('COL')"
-                      #variableCol />
-                    <label class="form-check-label">
-                      <cite title="Source Title">COL</cite>
-                    </label>
-                  </div>
-                  <div class="form-check">
-                    <input class="form-check-input" type="checkbox" value="POP" (click)="metodoBancos('POP')"
-                      #variableCol />
-                    <label class="form-check-label">
-                      <cite title="Source Title">POP</cite>
+                  <div class="form-check" *ngFor="let b of ['COL', 'POP']">
+                    <input class="form-check-input" type="checkbox" id="fBanco_{{ b }}" [value]="b"
+                      [checked]="bancosArray.includes(b)" (click)="metodoBancos(b)" />
+                    <label class="form-check-label" for="fBanco_{{ b }}">
+                      <cite title="Source Title">{{ b }}</cite>
                     </label>
                   </div>
                 </div>
@@ -1837,16 +1815,18 @@
             <div class="col-md-12 mb-3">
               <figure>
                 <blockquote class="blockquote">
-                  <h6 class="fw-bold" data-bs-toggle="collapse" href="#collapseVen" style="cursor: pointer">
-                    Edad Vencimiento &nbsp;<i class="fa-solid fa-caret-down"></i>
+                  <h6 class="fw-bold filtro-toggle collapsed" data-bs-toggle="collapse" href="#collapseVen"
+                    aria-expanded="false" style="cursor: pointer">
+                    Edad Vencimiento <span *ngIf="edadVenArray.length">({{ edadVenArray.length }})</span>&nbsp;<span class="filtro-flecha"><i class="fa-solid fa-caret-down"></i></span>
                   </h6>
                 </blockquote>
 
                 <div class="collapse" id="collapseVen">
                   <div class="form-check" *ngFor="let t of tiposVen; let i = index">
-                    <input value="{{ t.tipoVencimiento }}" class="form-check-input" type="checkbox"
-                      (click)="metodoEdadVen(t.tipoVencimiento)" #variableCol />
-                    <label class="form-check-label">
+                    <input value="{{ t.tipoVencimiento }}" class="form-check-input" type="checkbox" id="fVen_{{ i }}"
+                      [checked]="edadVenArray.includes(t.tipoVencimiento)"
+                      (click)="metodoEdadVen(t.tipoVencimiento)" />
+                    <label class="form-check-label" for="fVen_{{ i }}">
                       <cite title="Source Title">{{ t.tipoVencimiento }}</cite>
                     </label>
                   </div>
@@ -1856,15 +1836,16 @@
             <div class="col-md-12 mb-3">
               <figure>
                 <blockquote class="blockquote">
-                  <h6 class="fw-bold" data-bs-toggle="collapse" href="#collapseSede" style="cursor: pointer">
-                    Sedes &nbsp;<i class="fa-solid fa-caret-down"></i>
+                  <h6 class="fw-bold filtro-toggle collapsed" data-bs-toggle="collapse" href="#collapseSede"
+                    aria-expanded="false" style="cursor: pointer">
+                    Sedes <span *ngIf="sedesArray.length">({{ sedesArray.length }})</span>&nbsp;<span class="filtro-flecha"><i class="fa-solid fa-caret-down"></i></span>
                   </h6>
                 </blockquote>
                 <div class="collapse" id="collapseSede">
                   <div class="form-check" *ngFor="let s of sedes; let i = index">
-                    <input value="{{ s.sede }}" class="form-check-input" type="checkbox" (click)="metodoSede(s.sede)"
-                      #variableCol />
-                    <label class="form-check-label">
+                    <input value="{{ s.sede }}" class="form-check-input" type="checkbox" id="fSede_{{ i }}"
+                      [checked]="sedesArray.includes(s.sede)" (click)="metodoSede(s.sede)" />
+                    <label class="form-check-label" for="fSede_{{ i }}">
                       <cite title="Source Title">{{ s.sede }}</cite>
                     </label>
                   </div>
@@ -1874,21 +1855,23 @@
             <div class="col-md-12 mb-3">
               <figure>
                 <blockquote class="blockquote">
-                  <h6 class="fw-bold" data-bs-toggle="collapse" href="#collapseJur" style="cursor: pointer">
-                    Clasificación Jurídica &nbsp;<i class="fa-solid fa-caret-down"></i>
+                  <h6 class="fw-bold filtro-toggle collapsed" data-bs-toggle="collapse" href="#collapseJur"
+                    aria-expanded="false" style="cursor: pointer">
+                    Clasificación Jurídica <span *ngIf="clasJurArray.length">({{ clasJurArray.length }})</span>&nbsp;<span class="filtro-flecha"><i class="fa-solid fa-caret-down"></i></span>
                   </h6>
                 </blockquote>
                 <div class="collapse" id="collapseJur">
-                  <div class="form-check" *ngFor="let clasi of clasificacionesJuridicas">
-                    <input class="form-check-input" type="checkbox" value="Normal" (click)="metodoClas(clasi)"
-                      #variableCol />
-                    <label class="form-check-label">
+                  <div class="form-check" *ngFor="let clasi of clasificacionesJuridicas; let i = index">
+                    <input class="form-check-input" type="checkbox" value="Normal" id="fJur_{{ i }}"
+                      [checked]="clasJurArray.includes(clasi)" (click)="metodoClas(clasi)" />
+                    <label class="form-check-label" for="fJur_{{ i }}">
                       <cite title="Source Title">{{ clasi }}</cite>
                     </label>
                   </div>
                   <div class="form-check" *ngIf="username == 'Blanca Mazo'">
-                    <input class="form-check-input" type="checkbox" (click)="metodoClas('PREJURIDICO')" #variableCol />
-                    <label class="form-check-label">
+                    <input class="form-check-input" type="checkbox" id="fJur_prejuridico"
+                      [checked]="clasJurArray.includes('PREJURIDICO')" (click)="metodoClas('PREJURIDICO')" />
+                    <label class="form-check-label" for="fJur_prejuridico">
                       <cite title="Source Title">PREJURIDICO</cite>
                     </label>
                   </div>
@@ -1900,17 +1883,19 @@
             <div class="col-md-12 mb-2">
               <figure>
                 <blockquote class="blockquote">
-                  <h6 class="fw-bold" data-bs-toggle="collapse" href="#collapseClas" style="cursor: pointer">
-                    Clasificación Gestión &nbsp;<i class="fa-solid fa-caret-down"></i>
+                  <h6 class="fw-bold filtro-toggle collapsed" data-bs-toggle="collapse" href="#collapseClas"
+                    aria-expanded="false" style="cursor: pointer">
+                    Clasificación Gestión <span *ngIf="clasGesArray">(1)</span>&nbsp;<span class="filtro-flecha"><i class="fa-solid fa-caret-down"></i></span>
                   </h6>
                 </blockquote>
                 <div class="collapse" id="collapseClas">
                   <div class="form-check" *ngFor="let c of ClasificacionArray; let i = index">
                     <div class="form-check form-check-inline">
-                      <input #variableCol class="form-check-input" (click)="
+                      <input class="form-check-input" (click)="
                           metodoClasGestion(c.tipo, c.idNombreClasificacion)
-                        " type="radio" name="i" id="i" value="{{ c.idNombreClasificacion }}" />
-                      <label class="form-check-label" for="i">{{
+                        " type="radio" name="clasGes" id="fClasGes_{{ i }}" value="{{ c.idNombreClasificacion }}"
+                        [checked]="clasGesArray?.id == c.idNombreClasificacion" />
+                      <label class="form-check-label" for="fClasGes_{{ i }}">{{
                         c.nombre
                         }}</label>
                     </div>
@@ -1923,14 +1908,15 @@
             <div class="col-md-12 mb-3">
               <figure>
                 <blockquote class="blockquote">
-                  <h6 class="fw-bold" data-bs-toggle="collapse" href="#collapseAsesor" style="cursor: pointer">
-                    Filtro Sin Asesor &nbsp;<i class="fa-solid fa-caret-down"></i>
+                  <h6 class="fw-bold filtro-toggle collapsed" data-bs-toggle="collapse" href="#collapseAsesor"
+                    aria-expanded="false" style="cursor: pointer">
+                    Filtro Sin Asesor <span *ngIf="filtros.sinAsesor > 0">(1)</span>&nbsp;<span class="filtro-flecha"><i class="fa-solid fa-caret-down"></i></span>
                   </h6>
                 </blockquote>
                 <div class="collapse" id="collapseAsesor">
-                  <input class="form-check-input" type="checkbox" value="Normal" #variableCol
-                    (click)="asignarAsesor()" />
-                  <label class="form-check-label">
+                  <input class="form-check-input" type="checkbox" value="Normal" id="fSinAsesor"
+                    [checked]="filtros.sinAsesor > 0" (click)="asignarAsesor()" />
+                  <label class="form-check-label" for="fSinAsesor">
                     <cite title="Source Title">&nbsp;SIN ASESOR</cite>
                   </label>
                 </div>
@@ -1957,9 +1943,10 @@
                 <blockquote class="blockquote">
                   <h6 class="fw-bold">Año</h6>
                 </blockquote>
-                <select (change)="calcularFechasAnio($event)" class="form-select">
-                  <option [value]="null" selected>Seleccione Un Año</option>
-                  <option *ngFor="let a of listaDeAnios" [value]="a">
+                <select [(ngModel)]="anioSeleccionado" (ngModelChange)="calcularFechasAnio($event)"
+                  class="form-select">
+                  <option [ngValue]="null">Seleccione Un Año</option>
+                  <option *ngFor="let a of listaDeAnios" [ngValue]="a">
                     {{ a }}
                   </option>
                 </select>
@@ -1971,7 +1958,7 @@
                   <h6 class="fw-bold">Fecha Gestión</h6>
                 </blockquote>
                 <div class="input-group input-group-sm">
-                  <span class="input-group-text fw-bold">Deste</span>
+                  <span class="input-group-text fw-bold">Desde</span>
                   <input type="date" [(ngModel)]="filtros.fechaGestionInicio" class="form-control" />
                 </div>
                 <br />
@@ -1996,29 +1983,25 @@
                 </figure>
               </div>
             </div>
-            <div class="row">
-              <div class="col-md-4 ms-2 me-5">
-                <button *ngIf="!limpiarFiltro" class="btn btn-primary" (click)="reiniciarFiltros('')">
-                  Limpiar
-                </button>
-                <button *ngIf="limpiarFiltro" class="btn btn-primary">
-                  Limpiar...
-                  <span class="spinner-border spinner-border-sm float-right" role="status" aria-hidden="true"></span>
-                </button>
-              </div>
-              <div class="col-md-4">
-                <button *ngIf="!botonFiltro" class="btn btn-danger b" (click)="filtroFirst()">
-                  Filtrar
-                </button>
-                <button *ngIf="botonFiltro" class="btn btn-danger b">
-                  Filtrar...
-                  <span class="spinner-border spinner-border-sm float-right" role="status" aria-hidden="true"></span>
-                </button>
-              </div>
-            </div>
           </div>
         </div>
       </div>
+    </div>
+    <div class="offcanvas-footer-filtros">
+      <button *ngIf="!limpiarFiltro" class="btn btn-primary" (click)="reiniciarFiltros('')">
+        Limpiar
+      </button>
+      <button *ngIf="limpiarFiltro" class="btn btn-primary">
+        Limpiar...
+        <span class="spinner-border spinner-border-sm float-right" role="status" aria-hidden="true"></span>
+      </button>
+      <button *ngIf="!botonFiltro" class="btn btn-danger b" (click)="filtroFirst()">
+        Filtrar
+      </button>
+      <button *ngIf="botonFiltro" class="btn btn-danger b">
+        Filtrar...
+        <span class="spinner-border spinner-border-sm float-right" role="status" aria-hidden="true"></span>
+      </button>
     </div>
   </div>
 
@@ -2034,10 +2017,14 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <div class="input-group mb-3">
-            <span class="input-group-text fw-bold">Dato</span>
-            <input [(ngModel)]="buscarObligacion" #datoBuscar type="text" class="form-control" />
-          </div>
+          <!-- FORM PARA QUE EL NAVEGADOR GUARDE LO BUSCADO Y LO SUGIERA DESPUES -->
+          <form id="formBuscarObligacion" (ngSubmit)="!botonFiltrarObligacion && getByDato()" autocomplete="on">
+            <div class="input-group mb-3">
+              <span class="input-group-text fw-bold">Dato</span>
+              <input [(ngModel)]="buscarObligacion" #datoBuscar type="text" class="form-control"
+                name="datoBuscarObligacion" autocomplete="on" />
+            </div>
+          </form>
 
           <table class="table table-responsive table-bordered text-center table-hover" *ngIf="filtradoBuscar">
             <thead>
@@ -2120,7 +2107,7 @@
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
             Cerrar
           </button>
-          <button *ngIf="!botonFiltrarObligacion" type="button" class="btn btn-danger b" (click)="getByDato()">
+          <button *ngIf="!botonFiltrarObligacion" type="submit" form="formBuscarObligacion" class="btn btn-danger b">
             Buscar
           </button>
           <button *ngIf="botonFiltrarObligacion" class="btn btn-danger b">

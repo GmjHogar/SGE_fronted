@@ -3,10 +3,8 @@ import {
   ElementRef,
   HostListener,
   OnInit,
-  QueryList,
   Renderer2,
   ViewChild,
-  ViewChildren,
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { isLeapYear } from 'date-fns';
@@ -146,6 +144,7 @@ export class HomeCarteraComponent implements OnInit {
   paginas!: Array<number>;
   fechasIncrementadas: string[] = [];
   listaDeAnios: number[] = [];
+  anioSeleccionado: number | null = null;
   sedes: any[] = [];
   cuotasSelected: any[] = [];
   notiArray: Notificacion[] = [];
@@ -514,10 +513,13 @@ export class HomeCarteraComponent implements OnInit {
   sinAsesor: boolean = false;
   acuerdosVencidos: boolean = false;
 
-  @ViewChildren('variableCol') colcheck!: QueryList<ElementRef>;
-
   ngOnInit(): void {
-    this.getCuentasCobrar();
+    const paginaGuardada = this.restaurarFiltrosLocal();
+    if (paginaGuardada != null) {
+      this.filtroFirst(paginaGuardada);
+    } else {
+      this.getCuentasCobrar();
+    }
     this.getClasificacion();
     this.getTipoVen();
     this.getSedes();
@@ -579,9 +581,139 @@ export class HomeCarteraComponent implements OnInit {
     return listaDeAnios;
   }
 
-  calcularFechasAnio(event: any) {
-    this.filtros.fechaCpcInicio = new Date(event.target.value, 0, 1); // 0 representa enero
-    this.filtros.fechaCpcFin = new Date(event.target.value, 11, 31); // 11 representa diciembre
+  calcularFechasAnio(anio: number | null) {
+    if (anio == null) {
+      this.filtros.fechaCpcInicio = null;
+      this.filtros.fechaCpcFin = null;
+      return;
+    }
+    this.filtros.fechaCpcInicio = new Date(anio, 0, 1); // 0 representa enero
+    this.filtros.fechaCpcFin = new Date(anio, 11, 31); // 11 representa diciembre
+  }
+
+  // CANTIDAD DE GRUPOS DE FILTROS ACTIVOS
+  get cantidadFiltrosActivos(): number {
+    const tieneValor = (v: any) => v != null && v !== '' && v !== 0;
+    return [
+      this.bancosArray.length > 0,
+      this.edadVenArray.length > 0,
+      this.sedesArray.length > 0,
+      this.clasJurArray.length > 0,
+      this.clasGesArray != null,
+      this.filtros.sinAsesor > 0,
+      tieneValor(this.filtros.diasVencidosInicio) || tieneValor(this.filtros.diasVencidosFin),
+      tieneValor(this.filtros.saldoCapitalInicio) || tieneValor(this.filtros.saldoCapitalFin),
+      this.anioSeleccionado != null,
+      tieneValor(this.filtros.fechaGestionInicio) || tieneValor(this.filtros.fechaGestionFin),
+      tieneValor(this.filtros.fechaCompromisoInicio),
+    ].filter((activo) => activo).length;
+  }
+
+  // PERSISTENCIA DE FILTROS EN LOCALSTORAGE
+  private get claveFiltrosLocal(): string {
+    return `filtrosCartera_${this.authService.getUsername()}`;
+  }
+
+  guardarFiltrosLocal() {
+    const guardado = {
+      bancos: this.bancosArray,
+      edadVen: this.edadVenArray,
+      sedes: this.sedesArray,
+      clasJur: this.clasJurArray,
+      clasGes: this.clasGesArray,
+      sinAsesor: this.filtros.sinAsesor,
+      diasVencidosInicio: this.filtros.diasVencidosInicio,
+      diasVencidosFin: this.filtros.diasVencidosFin,
+      saldoCapitalInicio: this.filtros.saldoCapitalInicio,
+      saldoCapitalFin: this.filtros.saldoCapitalFin,
+      anio: this.anioSeleccionado,
+      fechaGestionInicio: this.filtros.fechaGestionInicio,
+      fechaGestionFin: this.fechaParaInput(this.filtros.fechaGestionFin),
+      fechaCompromisoInicio: this.filtros.fechaCompromisoInicio,
+      pagina: this.page,
+      size: this.size,
+    };
+    try {
+      localStorage.setItem(this.claveFiltrosLocal, JSON.stringify(guardado));
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  // filtroFirst() reemplaza fechaGestionFin por un Date; se guarda como 'yyyy-MM-dd' para el input
+  private fechaParaInput(fecha: any): string | null {
+    if (!(fecha instanceof Date)) {
+      return fecha ?? null;
+    }
+    const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+    const dia = String(fecha.getDate()).padStart(2, '0');
+    return `${fecha.getFullYear()}-${mes}-${dia}`;
+  }
+
+  // AL PAGINAR UN FILTRO SOLO SE ACTUALIZA LA PAGINA EN LO GUARDADO
+  actualizarPaginaLocal() {
+    try {
+      const texto = localStorage.getItem(this.claveFiltrosLocal);
+      if (!texto) {
+        return;
+      }
+      const guardado = JSON.parse(texto);
+      guardado.pagina = this.page;
+      guardado.size = this.size;
+      localStorage.setItem(this.claveFiltrosLocal, JSON.stringify(guardado));
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  borrarFiltrosLocal() {
+    try {
+      localStorage.removeItem(this.claveFiltrosLocal);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  // DEVUELVE LA PAGINA GUARDADA, O null SI NO HAY FILTROS GUARDADOS
+  restaurarFiltrosLocal(): number | null {
+    let guardado: any = null;
+    try {
+      const texto = localStorage.getItem(this.claveFiltrosLocal);
+      guardado = texto ? JSON.parse(texto) : null;
+    } catch (error) {
+      console.log(error);
+    }
+
+    if (guardado == null) {
+      return null;
+    }
+
+    this.bancosArray = guardado.bancos ?? [];
+    this.edadVenArray = guardado.edadVen ?? [];
+    this.sedesArray = guardado.sedes ?? [];
+    this.clasJurArray = guardado.clasJur ?? [];
+    this.clasGesArray = guardado.clasGes ?? null;
+    this.filtros.sinAsesor = guardado.sinAsesor ?? 0;
+    this.filtros.diasVencidosInicio = guardado.diasVencidosInicio ?? null;
+    this.filtros.diasVencidosFin = guardado.diasVencidosFin ?? null;
+    this.filtros.saldoCapitalInicio = guardado.saldoCapitalInicio ?? null;
+    this.filtros.saldoCapitalFin = guardado.saldoCapitalFin ?? null;
+    this.anioSeleccionado = guardado.anio ?? null;
+    this.calcularFechasAnio(this.anioSeleccionado);
+    this.filtros.fechaGestionInicio = guardado.fechaGestionInicio ?? null;
+    this.filtros.fechaGestionFin = guardado.fechaGestionFin ?? null;
+    this.filtros.fechaCompromisoInicio = guardado.fechaCompromisoInicio ?? null;
+
+    if (this.cantidadFiltrosActivos == 0) {
+      this.borrarFiltrosLocal();
+      return null;
+    }
+
+    if ([10, 20, 50, 100].includes(guardado.size)) {
+      this.size = guardado.size;
+    }
+    const pagina = Number(guardado.pagina);
+    return Number.isInteger(pagina) && pagina > 0 ? pagina : 0;
   }
 
   // TRAER CUENTAS POR COBRAR
@@ -3878,7 +4010,7 @@ export class HomeCarteraComponent implements OnInit {
   }
 
   //FILTROS
-  filtroFirst() {
+  filtroFirst(pagina: number = 0) {
     var td;
     var tr;
     var contenido: any;
@@ -3979,6 +4111,10 @@ export class HomeCarteraComponent implements OnInit {
 
     console.log(this.filtros);
 
+    this.page = pagina;
+    this.cont = this.initialCon + this.page * this.size;
+    this.guardarFiltrosLocal();
+
     // FORMATEAR FECHA FIN DE GESTIÓN
     if (
       this.filtros.fechaGestionFin != null &&
@@ -4010,7 +4146,6 @@ export class HomeCarteraComponent implements OnInit {
     }
 
     this.botonFiltro = true;
-    this.page = 0;
     console.log(this.filtros);
     this.cuentasCobrar
       .filtro(this.page, this.size, this.fechaCreacion, this.filtros)
@@ -4098,6 +4233,12 @@ export class HomeCarteraComponent implements OnInit {
           }
           console.log(this.cuentasCobrarArray);
 
+          // LA PAGINA GUARDADA YA NO EXISTE (CAMBIARON LOS DATOS): VOLVER A LA PRIMERA
+          if (this.cuentasCobrarArray.length == 0 && this.page > 0) {
+            this.filtroFirst(0);
+            return;
+          }
+
           if (this.cuentasCobrarArray.length == 0) {
             Swal.fire({
               icon: 'error',
@@ -4105,9 +4246,12 @@ export class HomeCarteraComponent implements OnInit {
               text: 'No hay Cuentas Con Estos Filtros',
               timer: 3000,
             });
+            this.borrarFiltrosLocal();
             this.getCuentasCobrar();
             return;
           }
+          // AL RECARGAR CON FILTROS GUARDADOS ESTE ES EL PRIMER LLAMADO Y DEBE QUITAR EL SPINNER
+          this.spinner = false;
           $('#offcanvasFilter').offcanvas('hide');
         },
         (error: any) => {
@@ -4202,6 +4346,7 @@ export class HomeCarteraComponent implements OnInit {
           this.botonFiltro = false;
           this.filtrando = true;
           this.filtroAgain = true;
+          this.actualizarPaginaLocal();
           this.paginas = new Array(data.totalPages);
           this.cuentasCobrarArray = data.content;
           console.log(this.cuentasCobrarArray);
@@ -4270,6 +4415,7 @@ export class HomeCarteraComponent implements OnInit {
               text: 'No hay Cuentas Con Estos Filtros',
               timer: 3000,
             });
+            this.borrarFiltrosLocal();
             this.getCuentasCobrar();
             return;
           }
@@ -4413,15 +4559,15 @@ export class HomeCarteraComponent implements OnInit {
     this.sedesArray = [];
     this.clasJurArray = [];
     this.clasGesArray = null;
+    this.anioSeleccionado = null;
+    this.page = 0;
+    this.cont = this.initialCon;
+    this.borrarFiltrosLocal();
 
     if (accion == 'LIMPIAR') {
       this.buscarObligacion = '';
       this.cuentasCobrarBuscar = [];
       this.filtradoBuscar = false;
-    }
-
-    for (const i of this.colcheck.toArray()) {
-      i.nativeElement.checked = false;
     }
 
     if (
