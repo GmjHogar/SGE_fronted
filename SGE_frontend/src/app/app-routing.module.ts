@@ -19,6 +19,7 @@ import { GestionComponent } from './componentesGenerales/sources/cartera/gestion
 import { LoginComponent } from './componentesGenerales/login/login.component';
 import { OpcionesComponent } from './componentesGenerales/opciones/opciones.component';
 import { PerfilUsuarioComponent } from './componentesGenerales/perfil-usuario/perfil-usuario.component';
+import { PoliticaPrivacidadComponent } from './componentesGenerales/politica-privacidad/politica-privacidad.component';
 
 // Admin General
 import { DashboardSuperAdminComponent } from './Pages/AdminGeneral/dashboard-super-admin/dashboard-super-admin.component';
@@ -126,6 +127,8 @@ const routes: Routes = [
     component: LoginComponent,
     canActivate: [LoginGuard],
   },
+  // PÚBLICA: la usa Google para verificar la app, no lleva guard
+  { path: 'privacidad', component: PoliticaPrivacidadComponent },
 
   {
     path: 'opciones',

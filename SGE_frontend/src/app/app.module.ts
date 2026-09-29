@@ -145,6 +145,7 @@ import { SidebarVentasComponent } from './Pages/Ventas/componentesVentas/sidebar
 
 import { AgregarClienteModule } from './moduls/agregar-cliente/agregar-cliente.module';
 import { DetallesPagoComponent } from './Pages/Consignaciones/pages/componentesConsignaciones/detalles-pago/detalles-pago.component';
+import { PoliticaPrivacidadComponent } from './componentesGenerales/politica-privacidad/politica-privacidad.component';
 
 
 
@@ -253,7 +254,8 @@ import { DetallesPagoComponent } from './Pages/Consignaciones/pages/componentesC
     VerTransaccionComponent,
     MostrarInformacionComponent,
     VerLinksComponent,
-    DetallesPagoComponent
+    DetallesPagoComponent,
+    PoliticaPrivacidadComponent
   ],
 
   imports: [

@@ -1,0 +1,224 @@
+<div class="privacidad">
+  <!-- ENCABEZADO -->
+  <header class="topbar">
+    <div class="container topbar-contenido">
+      <img src="assets/H_electro.svg" alt="ElectroHogar" class="logo" />
+      <span class="etiqueta-interna">
+        <span class="etiqueta-icono"><i class="fa-solid fa-lock"></i></span>
+        SGE · Uso interno
+      </span>
+    </div>
+  </header>
+
+  <!-- TÍTULO -->
+  <section class="hero">
+    <div class="container">
+      <p class="hero-sobretitulo">Sistema de Gestión Empresarial SGE</p>
+      <h1 class="hero-titulo">Política de Privacidad</h1>
+      <p class="hero-texto">
+        Cómo GMJ HOGAR S.A.S. trata la información que se gestiona en la Aplicación y cómo usa Google Drive.
+      </p>
+      <div class="hero-meta">
+        <span class="chip">
+          <span class="chip-icono"><i class="fa-regular fa-calendar"></i></span>
+          Última actualización: 29 de septiembre de 2026
+        </span>
+        <span class="chip">
+          <span class="chip-icono"><i class="fa-solid fa-building"></i></span>
+          GMJ HOGAR S.A.S. · NIT 901.056.810-9
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <div class="container cuerpo">
+    <div class="row g-4">
+      <!-- ÍNDICE -->
+      <aside class="col-lg-3">
+        <nav class="indice" aria-label="Contenido">
+          <p class="indice-titulo">Contenido</p>
+          <ol>
+            <li *ngFor="let s of secciones; let i = index">
+              <a [href]="'#' + s.id" (click)="irASeccion($event, s.id)">
+                <span class="indice-numero">{{ i + 1 }}</span>
+                {{ s.titulo }}
+              </a>
+            </li>
+          </ol>
+        </nav>
+      </aside>
+
+      <!-- CONTENIDO -->
+      <main class="col-lg-9">
+        <div class="documento">
+          <section id="responsable" class="seccion">
+            <h2><span class="numero">1</span>Responsable</h2>
+            <p>
+              <strong>GMJ HOGAR S.A.S.</strong>, identificada con NIT 901.056.810-9, con domicilio en Medellín,
+              Calle 51 # 53-99 ("la Empresa"), es responsable del tratamiento de los datos que se gestionan en el
+              Sistema de Gestión Empresarial SGE ("la Aplicación").
+            </p>
+            <p class="mb-0">
+              Contacto para asuntos de privacidad:
+              <a [href]="'mailto:' + correoContacto">{{ correoContacto }}</a>
+            </p>
+          </section>
+
+          <section id="alcance" class="seccion">
+            <h2><span class="numero">2</span>Alcance</h2>
+            <p class="mb-0">
+              La Aplicación es de <strong>uso interno</strong>. Solo la usan empleados y colaboradores autorizados de
+              la Empresa para gestionar la cartera, los clientes y las consignaciones. No está disponible para el
+              público general.
+            </p>
+          </section>
+
+          <section id="datos" class="seccion">
+            <h2><span class="numero">3</span>Datos que tratamos</h2>
+            <div class="tarjetas-datos">
+              <div class="tarjeta-dato">
+                <span class="tarjeta-icono"><i class="fa-solid fa-users"></i></span>
+                <div>
+                  <strong>Datos de clientes</strong>
+                  <p>Nombres, documento de identidad, obligaciones, pagos y consignaciones registradas.</p>
+                </div>
+              </div>
+              <div class="tarjeta-dato">
+                <span class="tarjeta-icono"><i class="fa-solid fa-receipt"></i></span>
+                <div>
+                  <strong>Comprobantes de pago</strong>
+                  <p>Imágenes de los soportes de consignación que cargan los usuarios.</p>
+                </div>
+              </div>
+              <div class="tarjeta-dato">
+                <span class="tarjeta-icono"><i class="fa-solid fa-file-pdf"></i></span>
+                <div>
+                  <strong>Reportes</strong>
+                  <p>Documentos PDF que genera la Aplicación con la información de las consignaciones.</p>
+                </div>
+              </div>
+              <div class="tarjeta-dato">
+                <span class="tarjeta-icono"><i class="fa-solid fa-id-badge"></i></span>
+                <div>
+                  <strong>Datos de los usuarios de la Aplicación</strong>
+                  <p>Nombre, usuario, sede y registro de las acciones que hacen.</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section id="google-drive" class="seccion">
+            <h2><span class="numero">4</span>Uso de Google Drive</h2>
+            <p>
+              La Aplicación se conecta a Google Drive mediante las APIs de Google, con una cuenta propiedad de la
+              Empresa, únicamente para:
+            </p>
+            <ul class="lista-check">
+              <li><strong>guardar</strong> los comprobantes de pago y los reportes PDF que genera la Aplicación, y</li>
+              <li><strong>consultar y descargar</strong> esos mismos archivos cuando un usuario autorizado los necesita.</li>
+            </ul>
+            <p class="mb-0">
+              La Aplicación <strong>no</strong> lee, modifica ni elimina otros archivos de la cuenta, y
+              <strong>no</strong> accede a datos de Google de terceros ni de los usuarios que inician sesión en ella.
+            </p>
+          </section>
+
+          <section id="uso-limitado" class="seccion">
+            <h2><span class="numero">5</span>Uso limitado de los datos de Google</h2>
+            <div class="destacado">
+              <p>
+                El uso que hace la Aplicación de la información recibida de las APIs de Google cumple la
+                <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank"
+                  rel="noopener">Política de datos de usuario de los servicios de API de Google</a>,
+                incluidos los requisitos de Uso Limitado. En particular:
+              </p>
+              <ul class="lista-check mb-0">
+                <li>los datos se usan <strong>solo</strong> para las funciones descritas en la sección 4;</li>
+                <li><strong>no</strong> se venden, ni se transfieren a terceros, ni se usan con fines publicitarios;</li>
+                <li><strong>no</strong> se usan para entrenar modelos de inteligencia artificial;</li>
+                <li>solo los consultan personas de la Empresa cuando es necesario para la operación, por seguridad o
+                  por obligación legal.</li>
+              </ul>
+            </div>
+          </section>
+
+          <section id="compartir" class="seccion">
+            <h2><span class="numero">6</span>Con quién compartimos los datos</h2>
+            <p>No compartimos datos personales con terceros, salvo:</p>
+            <ul class="mb-0">
+              <li>los proveedores de infraestructura que alojan la Aplicación y los archivos (por ejemplo, Google), que
+                actúan como encargados del tratamiento;</li>
+              <li>las autoridades competentes, cuando la ley lo exija.</li>
+            </ul>
+          </section>
+
+          <section id="seguridad" class="seccion">
+            <h2><span class="numero">7</span>Seguridad</h2>
+            <p class="mb-0">
+              Las credenciales de acceso a Google Drive se guardan de forma protegida en los servidores de la Empresa
+              y no se incluyen en el código fuente. El acceso a la Aplicación requiere usuario y contraseña, y cada
+              usuario solo puede hacer las acciones que corresponden a su rol.
+            </p>
+          </section>
+
+          <section id="conservacion" class="seccion">
+            <h2><span class="numero">8</span>Conservación</h2>
+            <p class="mb-0">
+              Los comprobantes y reportes se conservan mientras sean necesarios para la gestión de la cartera y
+              durante los plazos que exigen las normas contables, tributarias y comerciales aplicables.
+            </p>
+          </section>
+
+          <section id="derechos" class="seccion">
+            <h2><span class="numero">9</span>Derechos de los titulares</h2>
+            <p class="mb-0">
+              Conforme a la Ley 1581 de 2012 y sus decretos reglamentarios, los titulares de los datos pueden conocer,
+              actualizar, rectificar y solicitar la supresión de sus datos, así como revocar la autorización otorgada,
+              escribiendo a <a [href]="'mailto:' + correoContacto">{{ correoContacto }}</a>. Responderemos en los
+              plazos que establece la ley.
+            </p>
+          </section>
+
+          <section id="revocar" class="seccion">
+            <h2><span class="numero">10</span>Revocar el acceso a Google Drive</h2>
+            <p class="mb-0">
+              El propietario de la cuenta de Google puede revocar en cualquier momento el acceso de la Aplicación en
+              <a href="https://myaccount.google.com/permissions" target="_blank"
+                rel="noopener">myaccount.google.com/permissions</a>.
+              Si lo hace, la Aplicación dejará de poder guardar y consultar comprobantes.
+            </p>
+          </section>
+
+          <section id="cambios" class="seccion">
+            <h2><span class="numero">11</span>Cambios</h2>
+            <p class="mb-0">
+              Podemos actualizar esta política. La versión vigente estará siempre publicada en esta dirección, con su
+              fecha de actualización.
+            </p>
+          </section>
+        </div>
+
+        <!-- CONTACTO -->
+        <div class="contacto">
+          <div>
+            <p class="contacto-titulo">¿Tienes preguntas sobre tus datos?</p>
+            <p class="contacto-texto">Escríbenos y te responderemos en los plazos que establece la ley.</p>
+          </div>
+          <a class="btn-contacto" [href]="'mailto:' + correoContacto">
+            <span class="chip-icono"><i class="fa-solid fa-envelope"></i></span>
+            Escribir al equipo
+          </a>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- PIE -->
+  <footer class="pie">
+    <div class="container">
+      <span class="sin-corte">© {{ anioActual }} GMJ HOGAR S.A.S.</span> ·
+      <span class="sin-corte">NIT 901.056.810-9</span> ·
+      <span class="sin-corte">Calle 51 # 53-99, Medellín</span>
+    </div>
+  </footer>
+</div>
