@@ -171,7 +171,8 @@ export type ReciboPago = {
   numeroRecibo: string,
   valorRecibo: number,
   fechaRecibo: Date,
-  ruta: string
+  /** @deprecated NO USAR: en /api/v2 puede ser null, el id de Drive o una ruta vieja. Usar getReciboArchivo(idRecibo) */
+  ruta: string | null
   nombreArchivo: string
 
 }

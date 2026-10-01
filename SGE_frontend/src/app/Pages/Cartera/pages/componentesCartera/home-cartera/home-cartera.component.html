@@ -2173,7 +2173,14 @@
           data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <embed id="mostrarRecibo" src="" height="500px" width="465px" type="application/pdf" />
+        <div *ngIf="cargandoRecibo" class="d-flex align-items-center justify-content-center" style="height: 500px">
+          <div class="spinner-border" role="status" style="width: 3rem; height: 3rem; color: #960010"></div>
+        </div>
+        <div *ngIf="!cargandoRecibo && errorRecibo != ''" class="alert alert-warning text-center mb-0">
+          {{ errorRecibo }}
+        </div>
+        <embed *ngIf="!cargandoRecibo && reciboArchivo" [src]="reciboArchivo" height="500px" width="465px"
+          type="application/pdf" />
       </div>
     </div>
   </div>

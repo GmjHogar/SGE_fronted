@@ -2,10 +2,12 @@ import {
   Component,
   ElementRef,
   HostListener,
+  OnDestroy,
   OnInit,
   Renderer2,
   ViewChild,
 } from '@angular/core';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { isLeapYear } from 'date-fns';
 
@@ -52,7 +54,7 @@ declare var $: any;
   templateUrl: './home-cartera.component.html',
   styleUrls: ['./home-cartera.component.css'],
 })
-export class HomeCarteraComponent implements OnInit {
+export class HomeCarteraComponent implements OnInit, OnDestroy {
   @ViewChild('datoBuscar', { static: false }) miInput!: ElementRef;
 
   @ViewChild('telefono')
@@ -66,7 +68,8 @@ export class HomeCarteraComponent implements OnInit {
     private authService: AuthenticationService,
     private router: Router,
     private renderer: Renderer2,
-    private elementRef: ElementRef
+    private elementRef: ElementRef,
+    private sanitizer: DomSanitizer
   ) {
     this.listaDeAnios = this.obtenerListaDeAnios();
   }
@@ -124,6 +127,12 @@ export class HomeCarteraComponent implements OnInit {
   positionGestionSelected!: number;
   savePago: boolean = false;
   base64Recibo: string = '';
+  // RECIBO ABIERTO DESDE LA LISTA DE PAGOS (SE PIDE AL BACK AL ABRIRLO)
+  reciboArchivo: SafeResourceUrl | null = null;
+  urlReciboArchivo: string = '';
+  idReciboArchivo: number = 0;
+  cargandoRecibo: boolean = false;
+  errorRecibo: string = '';
   recibosPagoSinFiltrar: ReciboPago[] = [];
   recibosPago!: ReciboPago[];
   constantes: string[] = [
@@ -546,6 +555,10 @@ export class HomeCarteraComponent implements OnInit {
         }
       }
     }
+  }
+
+  ngOnDestroy(): void {
+    this.liberarRecibo();
   }
 
   getTipoVen() {
@@ -2258,10 +2271,10 @@ export class HomeCarteraComponent implements OnInit {
 
     console.log(this.cuotasList);
 
+    //UN MISMO RECIBO PUEDE VENIR EN VARIAS CUOTAS; SE DEJA UNO POR idRecibo
     this.recibosPago = this.recibosPagoSinFiltrar.filter(
       (r: ReciboPago, i: number, array) =>
-        array.findIndex((obj) => JSON.stringify(obj) === JSON.stringify(r)) ===
-        i
+        array.findIndex((obj) => obj.idRecibo === r.idRecibo) === i
     );
   }
 
@@ -5510,22 +5523,75 @@ export class HomeCarteraComponent implements OnInit {
           this.activarGuardarPago = false;
           this.savePago = false;
           console.log(error);
+          //400 = NO SE PUDO SUBIR EL RECIBO A DRIVE Y EL PAGO NO QUEDO REGISTRADO.
+          //SE CONSERVAN LOS DATOS Y SE REABRE EL MODAL PARA REINTENTAR
+          Swal.fire({
+            icon: 'error',
+            title: 'El pago no se registró',
+            text:
+              error.status == 400
+                ? 'No se pudo guardar el recibo. El pago no quedó registrado, intenta de nuevo.'
+                : 'Ocurrió un error al guardar el pago. Intenta de nuevo.',
+          }).then(() => {
+            $('#modalGestionCom').modal('show');
+          });
         }
       );
     }
 
     $('#modalGestionCom').modal('hide');
-    this.valorTotalIngresado = 0;
   }
 
+  //PIDE EL PDF DEL RECIBO AL BACK AL ABRIRLO (YA NO SE USA reciboPago.ruta).
+  //NO SE GUARDA CACHE EN MEMORIA: EL NAVEGADOR YA LO CACHEA CON EL ETag DE LA RESPUESTA
   obtenerReciboPosition(position: number) {
     this.mostrarRecibo = false;
     var recibo = this.recibosPago[position];
-    if (recibo != null || recibo != undefined) {
-      this.base64Recibo = 'data:application/pdf;base64,' + recibo.ruta;
-      var re: any = document.getElementById('mostrarRecibo');
-      re.src = this.base64Recibo;
+    if (recibo == null || recibo == undefined) {
+      return;
     }
+
+    var id = recibo.idRecibo;
+    this.idReciboArchivo = id;
+    this.liberarRecibo();
+    this.errorRecibo = '';
+    this.cargandoRecibo = true;
+
+    this.cuentasCobrar.getReciboArchivo(id).subscribe(
+      (archivo: Blob) => {
+        //SI YA SE ABRIO OTRO RECIBO, ESTA RESPUESTA LLEGO TARDE Y SE DESCARTA
+        if (this.idReciboArchivo != id) {
+          return;
+        }
+        if (archivo.size == 0) {
+          this.errorRecibo = 'El recibo no está disponible.';
+          this.cargandoRecibo = false;
+          return;
+        }
+        this.urlReciboArchivo = URL.createObjectURL(archivo);
+        this.reciboArchivo = this.sanitizer.bypassSecurityTrustResourceUrl(this.urlReciboArchivo);
+        this.cargandoRecibo = false;
+      },
+      (error: any) => {
+        if (this.idReciboArchivo != id) {
+          return;
+        }
+        this.errorRecibo =
+          error.status == 404
+            ? 'El recibo no está disponible.'
+            : 'No se pudo cargar el recibo. Intenta de nuevo.';
+        this.cargandoRecibo = false;
+      }
+    );
+  }
+
+  //LIBERA LA URL LOCAL DEL PDF. SIN ESTO CADA RECIBO ABIERTO SE QUEDA EN MEMORIA
+  liberarRecibo() {
+    if (this.urlReciboArchivo != '') {
+      URL.revokeObjectURL(this.urlReciboArchivo);
+      this.urlReciboArchivo = '';
+    }
+    this.reciboArchivo = null;
   }
 
   mostrarReciboPago(data: any) {

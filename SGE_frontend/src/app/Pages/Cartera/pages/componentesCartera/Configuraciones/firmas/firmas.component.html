@@ -35,14 +35,22 @@
                         <thead>
                           <tr>
                             <th>#</th>
-                            <th>Archivo</th>
+                            <th>Asesor</th>
+                            <th>Firma</th>
                             <th>Acciones</th>
                           </tr>
                         </thead>
                         <tbody>
                             <tr *ngFor="let f of firmasArray; let i = index">
                                 <td>{{ i + 1 }}</td>
-                                <td>{{ f.ruta }}</td>
+                                <td>{{ f.username }}</td>
+                                <td>
+                                    <img *ngIf="imagenesFirmas[f.idFirma]" [src]="imagenesFirmas[f.idFirma]"
+                                        alt="Firma de {{ f.username }}" style="max-height: 60px; max-width: 180px">
+                                    <span *ngIf="erroresFirmas[f.idFirma]" class="text-muted small">{{ erroresFirmas[f.idFirma] }}</span>
+                                    <span *ngIf="!imagenesFirmas[f.idFirma] && !erroresFirmas[f.idFirma]"
+                                        class="spinner-border spinner-border-sm text-secondary" role="status" aria-hidden="true"></span>
+                                </td>
                                 <td>
                                     <button *ngIf="!eliminarFirma" class="btn btn-sm b" (click)="delete(f.idFirma)"><i class="fa-solid fa-trash"></i></button>
                                     <button *ngIf="eliminarFirma" class="btn b">

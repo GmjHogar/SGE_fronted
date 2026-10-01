@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { Tarea, TareaUpdate } from 'src/app/Types/Cartera/Clasificacion-Tarea/Tarea';
 import { clasificacion } from 'src/app/Types/Cartera/Clasificacion/Clasificacion';
 import { CuentaCobrarCalculate } from 'src/app/Types/Cartera/CuentasPorCobrarResponse';
@@ -184,6 +184,11 @@ export class CuentasCobrarService {
 
   }
 
+  //DEVUELVE LOS BYTES DEL PDF DEL RECIBO. 404 = NO EXISTE O NO ESTA EN DRIVE
+  getReciboArchivo(idRecibo: number): Observable<Blob> {
+    return this.http.get(`${baseUrl}/pagos/recibo/${idRecibo}/archivo`, { responseType: 'blob' })
+  }
+
   // FIRMAS
   getAllFirmas() {
     return this.http.get(`${baseUrl}/firmasController/obtenerTodasFirmas`)
@@ -195,6 +200,11 @@ export class CuentasCobrarService {
 
   deleteFirma(id: number) {
     return this.http.delete(`${baseUrl}/firmasController/DeleteById/${id}`)
+  }
+
+  //DEVUELVE LOS BYTES DE LA IMAGEN DE LA FIRMA. 404 = NO EXISTE O NO ESTA EN DRIVE
+  getFirmaArchivo(idFirma: number): Observable<Blob> {
+    return this.http.get(`${baseUrl}/firmasController/${idFirma}/archivo`, { responseType: 'blob' })
   }
 
   getAsesoresCartera() {

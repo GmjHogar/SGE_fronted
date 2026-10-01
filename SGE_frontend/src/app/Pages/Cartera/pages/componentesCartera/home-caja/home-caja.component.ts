@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { error } from 'jquery';
 import { CuentasCobrarService } from 'src/app/Services/Cartera/cuentas-cobrar.service';
 import { AuthenticationService } from 'src/app/Services/authentication/authentication.service';
@@ -13,9 +14,15 @@ declare var $: any;
   templateUrl: './home-caja.component.html',
   styleUrls: ['./home-caja.component.css']
 })
-export class HomeCajaComponent implements OnInit {
+export class HomeCajaComponent implements OnInit, OnDestroy {
 
   base64Recibo: string = ""
+  // RECIBO ABIERTO DESDE LA LISTA DE PAGOS (SE PIDE AL BACK AL ABRIRLO)
+  reciboArchivo: SafeResourceUrl | null = null
+  urlReciboArchivo: string = ''
+  idReciboArchivo: number = 0
+  cargandoRecibo: boolean = false
+  errorRecibo: string = ''
   savePago: boolean = false
   search: boolean = false
   cedula: string = ''
@@ -48,11 +55,15 @@ export class HomeCajaComponent implements OnInit {
   recibosPagoSinFiltrar: ReciboPago[] = []
 
 
-  constructor(private cuentaCobrarService: CuentasCobrarService, private auth: AuthenticationService) { }
+  constructor(private cuentaCobrarService: CuentasCobrarService, private auth: AuthenticationService, private sanitizer: DomSanitizer) { }
 
 
 
   ngOnInit(): void {
+  }
+
+  ngOnDestroy(): void {
+    this.liberarRecibo()
   }
 
 
@@ -201,7 +212,8 @@ export class HomeCajaComponent implements OnInit {
 
                   this.coutasRequest.push(couta)
                   ///////////
-                  this.recibosPago = this.recibosPagoSinFiltrar.filter((r: ReciboPago, i: number, array) => array.findIndex(obj => JSON.stringify(obj) === JSON.stringify(r)) === i)
+                  //UN MISMO RECIBO PUEDE VENIR EN VARIAS CUOTAS; SE DEJA UNO POR idRecibo
+                  this.recibosPago = this.recibosPagoSinFiltrar.filter((r: ReciboPago, i: number, array) => array.findIndex(obj => obj.idRecibo === r.idRecibo) === i)
                 })
 
 
@@ -899,10 +911,18 @@ export class HomeCajaComponent implements OnInit {
           this.savePago = false
           this.limpiarPagos()
         }, (error: any) => {
-          this.activarGuardarPago = false
+          //400 = NO SE PUDO SUBIR EL RECIBO A DRIVE Y EL PAGO NO QUEDO REGISTRADO.
+          //SE DEJA EL BOTON "GUARDAR PAGOS" ACTIVO PARA REINTENTAR CON LOS MISMOS DATOS
+          this.activarGuardarPago = true
           this.savePago = false
           console.log(error);
-
+          Swal.fire({
+            icon: 'error',
+            title: 'El pago no se registró',
+            text: error.status == 400
+              ? 'No se pudo guardar el recibo. El pago no quedó registrado, intenta de nuevo.'
+              : 'Ocurrió un error al guardar el pago. Intenta de nuevo.'
+          })
         }
       )
 
@@ -946,16 +966,54 @@ export class HomeCajaComponent implements OnInit {
 
   }
 
+  //PIDE EL PDF DEL RECIBO AL BACK AL ABRIRLO (YA NO SE USA reciboPago.ruta).
+  //NO SE GUARDA CACHE EN MEMORIA: EL NAVEGADOR YA LO CACHEA CON EL ETag DE LA RESPUESTA
   obtenerReciboPosition(position: number) {
     this.mostrarRecibo = false;
     var recibo = this.recibosPago[position]
-    if (recibo != null || recibo != undefined) {
-      this.base64Recibo = "data:application/pdf;base64," + recibo.ruta
-      var re: any = document.getElementById('mostrarRecibo')
-      re.src = this.base64Recibo
-
-
+    if (recibo == null || recibo == undefined) {
+      return
     }
+
+    var id = recibo.idRecibo
+    this.idReciboArchivo = id
+    this.liberarRecibo()
+    this.errorRecibo = ''
+    this.cargandoRecibo = true
+
+    this.cuentaCobrarService.getReciboArchivo(id).subscribe(
+      (archivo: Blob) => {
+        //SI YA SE ABRIO OTRO RECIBO, ESTA RESPUESTA LLEGO TARDE Y SE DESCARTA
+        if (this.idReciboArchivo != id) {
+          return
+        }
+        if (archivo.size == 0) {
+          this.errorRecibo = 'El recibo no está disponible.'
+          this.cargandoRecibo = false
+          return
+        }
+        this.urlReciboArchivo = URL.createObjectURL(archivo)
+        this.reciboArchivo = this.sanitizer.bypassSecurityTrustResourceUrl(this.urlReciboArchivo)
+        this.cargandoRecibo = false
+      }, (error: any) => {
+        if (this.idReciboArchivo != id) {
+          return
+        }
+        this.errorRecibo = error.status == 404
+          ? 'El recibo no está disponible.'
+          : 'No se pudo cargar el recibo. Intenta de nuevo.'
+        this.cargandoRecibo = false
+      }
+    )
+  }
+
+  //LIBERA LA URL LOCAL DEL PDF. SIN ESTO CADA RECIBO ABIERTO SE QUEDA EN MEMORIA
+  liberarRecibo() {
+    if (this.urlReciboArchivo != '') {
+      URL.revokeObjectURL(this.urlReciboArchivo)
+      this.urlReciboArchivo = ''
+    }
+    this.reciboArchivo = null
   }
 
 

@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { DomSanitizer } from '@angular/platform-browser';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { CuentasCobrarService } from 'src/app/Services/Cartera/cuentas-cobrar.service';
 import { AuthenticationService } from 'src/app/Services/authentication/authentication.service';
 import Swal from 'sweetalert2';
@@ -9,11 +9,15 @@ import Swal from 'sweetalert2';
   templateUrl: './firmas.component.html',
   styleUrls: ['./firmas.component.css']
 })
-export class FirmasComponent implements OnInit {
+export class FirmasComponent implements OnInit, OnDestroy {
 
   constructor(private cuentasCobrar:CuentasCobrarService, private sanitizer: DomSanitizer, private authService:AuthenticationService) { }
 
   firmasArray:any[] = []
+  // IMAGEN DE CADA FIRMA POR idFirma (SE PIDE AL BACK; YA NO SE USA ruta)
+  imagenesFirmas: { [idFirma: number]: SafeUrl } = {}
+  erroresFirmas: { [idFirma: number]: string } = {}
+  private urlsFirmas: string[] = []
   asesores:any[] = []
 
   firma:any = {
@@ -29,16 +33,49 @@ export class FirmasComponent implements OnInit {
     this.getAsesores()
   }
 
+  ngOnDestroy(): void {
+    this.liberarFirmas()
+  }
+
   getAll(){
     this.cuentasCobrar.getAllFirmas().subscribe(
       (data:any) => {
         this.firmasArray = data
         console.log(data);
+        this.cargarImagenesFirmas()
         
       }, (error:any) => {
         console.log(error);
       }
     )
+  }
+
+  //PIDE LA IMAGEN DE CADA FIRMA AL BACK. EL NAVEGADOR LAS CACHEA CON EL ETag DE LA RESPUESTA
+  cargarImagenesFirmas() {
+    this.liberarFirmas()
+    this.firmasArray.forEach((f: any) => {
+      this.cuentasCobrar.getFirmaArchivo(f.idFirma).subscribe(
+        (archivo: Blob) => {
+          if (archivo.size == 0) {
+            this.erroresFirmas[f.idFirma] = 'No disponible'
+            return
+          }
+          const url = URL.createObjectURL(archivo)
+          this.urlsFirmas.push(url)
+          this.imagenesFirmas[f.idFirma] = this.sanitizer.bypassSecurityTrustUrl(url)
+        }, (error: any) => {
+          this.erroresFirmas[f.idFirma] = error.status == 404 ? 'No disponible' : 'Error al cargar'
+        }
+      )
+    })
+  }
+
+  //LIBERA LAS URLS LOCALES DE LAS IMAGENES. SIN ESTO SE QUEDAN EN MEMORIA
+  liberarFirmas() {
+    this.urlsFirmas.forEach((url: string) => URL.revokeObjectURL(url))
+    this.urlsFirmas = []
+    this.imagenesFirmas = {}
+    this.erroresFirmas = {}
   }
 
   save(){
@@ -77,11 +114,13 @@ export class FirmasComponent implements OnInit {
           window.location.reload()
         }, 2000);
       }, (error:any) => {
+        //400 = DATOS VACIOS, EL ASESOR YA TIENE FIRMA, LA IMAGEN NO ES VALIDA O FALLO LA SUBIDA A DRIVE
         Swal.fire({
           icon: 'error',
-          title: 'Error',
-          text: 'Error Al Guardar La Imagen',
-          timer: 2500
+          title: 'No se guardó la firma',
+          text: error.status == 400
+            ? 'Verifica que el asesor no tenga ya una firma y que el archivo sea una imagen PNG válida. Si todo está bien, intenta de nuevo.'
+            : 'Error Al Guardar La Imagen. Intenta de nuevo.'
         })
         this.crearFirma = false
         console.log(error);
