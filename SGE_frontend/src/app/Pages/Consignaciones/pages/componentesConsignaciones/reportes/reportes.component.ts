@@ -35,6 +35,7 @@ export class ReportesComponent implements OnInit {
   cont: number = 1
   isCon: boolean = false
   initialCon: number = 1;
+  descargandoId: number | null = null
 
   reportes: Reportes[] = []
   usuarios: users[] = []
@@ -283,18 +284,41 @@ export class ReportesComponent implements OnInit {
     )
   }
 
-  descargarReporte(base: string) {
-    const dowloandLink = document.createElement('a');
-    dowloandLink.href = "data:application/pdf;base64,"+base
-    dowloandLink.download = "reporte.pdf"
-    dowloandLink.target = '_blank'
+  //PIDE EL PDF AL BACK SOLO AL DESCARGAR (EL LISTADO YA NO LO TRAE).
+  //EL NAVEGADOR LO CACHEA CON EL ETag/Cache-Control DE LA RESPUESTA
+  descargarReporte(reporte: Reportes) {
+    if (this.descargandoId != null) {
+      return
+    }
+    this.descargandoId = reporte.idReporte
 
-    document.body.appendChild(dowloandLink)
-    dowloandLink.click()
-    document.body.removeChild(dowloandLink)
-   
-   
+    this.reportesService.getArchivo(reporte.idReporte).subscribe(
+      (archivo: Blob) => {
+        const url = URL.createObjectURL(archivo)
+        const dowloandLink = document.createElement('a');
+        dowloandLink.href = url
+        dowloandLink.download = reporte.nombreReporte || `reporte_${reporte.idReporte}.pdf`
 
+        document.body.appendChild(dowloandLink)
+        dowloandLink.click()
+        document.body.removeChild(dowloandLink)
+
+        //SE LIBERA DESPUES DE QUE EL NAVEGADOR EMPIEZA LA DESCARGA
+        setTimeout(() => URL.revokeObjectURL(url), 1000)
+        this.descargandoId = null
+      }, (error: any) => {
+        this.descargandoId = null
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: error.status == 404
+            ? 'El archivo de este reporte no está disponible'
+            : 'No se pudo cargar el reporte, intenta de nuevo',
+          timer: 3000
+        })
+        console.log(error);
+      }
+    )
   }
 
 

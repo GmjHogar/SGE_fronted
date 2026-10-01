@@ -14,15 +14,21 @@ export class ReportesService {
 
   constructor(private http:HttpClient) { }
 
+  // LOS LISTADOS NO TRAEN EL PDF (incluirArchivo=false); SE PIDE CON getArchivo AL DESCARGAR
   getAll(page:number, size:number, order:string): Observable<any> {
-    return this.http.get(`${baseUrl}/consignacion/filesReporte/getAllFiles?page=${page}&size=${size}&order=${order}`,  { responseType: 'json' })
+    return this.http.get(`${baseUrl}/consignacion/filesReporte/getAllFiles?page=${page}&size=${size}&order=${order}&incluirArchivo=false`,  { responseType: 'json' })
   }
 
   filtro(page:number, size:number, order:string, tipoReporte:string, username:string, fechaReporte:string){
-    return this.http.get(`${baseUrl}/consignacion/filesReporte/filtrosFiles?page=${page}&size=${size}&order=${order}&tipoReporte=${tipoReporte}&username=${username}&fechaReporte=${fechaReporte}`)
+    return this.http.get(`${baseUrl}/consignacion/filesReporte/filtrosFiles?page=${page}&size=${size}&order=${order}&tipoReporte=${tipoReporte}&username=${username}&fechaReporte=${fechaReporte}&incluirArchivo=false`)
   }
 
   getFilesByUsername(page:number, size:number, order:string, username:string){
-    return this.http.get(`${baseUrl}/consignacion/filesReporte/getFilesByUsername?page=${page}&size=${size}&order=${order}&username=${username}`)
+    return this.http.get(`${baseUrl}/consignacion/filesReporte/getFilesByUsername?page=${page}&size=${size}&order=${order}&username=${username}&incluirArchivo=false`)
+  }
+
+  //DEVUELVE LOS BYTES DEL PDF (SIN BASE64). 404 = EL REPORTE NO TIENE ARCHIVO EN DRIVE
+  getArchivo(idReporte: number): Observable<Blob> {
+    return this.http.get(`${baseUrl}/consignacion/filesReporte/${idReporte}/archivo`, { responseType: 'blob' })
   }
 }

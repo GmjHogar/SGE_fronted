@@ -56,7 +56,11 @@
                 <td>{{ r.usuario.nombres | uppercase}} {{ r.usuario.apellidos | uppercase}}</td>
                 <td>{{ r.fechaReporte | date: "d/M/yy" }}</td>
                 <td>
-                    <button (click)="descargarReporte(r.ruta)" class="btn btn-info btn-sm ms-2"><i class="fa-regular fa-eye"></i></button>
+                    <button *ngIf="descargandoId != r.idReporte" (click)="descargarReporte(r)" [disabled]="descargandoId != null"
+                        class="btn btn-info btn-sm ms-2" title="Descargar reporte"><i class="fa-regular fa-eye"></i></button>
+                    <button *ngIf="descargandoId == r.idReporte" class="btn btn-info btn-sm ms-2" disabled>
+                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    </button>
                     
                 </td>
             </tr>
